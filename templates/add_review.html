@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Add Review — {{ training.training_title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+
+        <!-- Training reference card -->
+        <div class="card mb-3 border-0" style="background:#e8f0fe;">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                         style="width:42px;height:42px;background:linear-gradient(135deg,#1a73e8,#0d47a1);flex-shrink:0;">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-primary">{{ training.training_title }}</div>
+                        <div class="text-muted small">
+                            <i class="bi bi-person me-1"></i>{{ training.employee_name }}
+                            &nbsp;·&nbsp;
+                            <i class="bi bi-building me-1"></i>{{ training.department }}
+                            &nbsp;·&nbsp;
+                            <i class="bi bi-activity me-1"></i>{{ training.status }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Form -->
+        <div class="card">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-star-half me-2"></i>Submit Review &amp; Feedback
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('add_review', training_id=training.id) }}">
+                    <div class="row g-3">
+
+                        <!-- Reviewer Name -->
+                        <div class="col-md-6">
+                            <label for="reviewer_name" class="form-label fw-semibold">
+                                <i class="bi bi-person me-1 text-primary"></i>Your Name <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="reviewer_name"
+                                name="reviewer_name"
+                                placeholder="e.g. Jane Doe"
+                                value="{{ form.get('reviewer_name', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Review Date -->
+                        <div class="col-md-6">
+                            <label for="review_date" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event me-1 text-primary"></i>Review Date <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                class="form-control"
+                                id="review_date"
+                                name="review_date"
+                                value="{{ form.get('review_date', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Star Rating -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold d-block">
+                                <i class="bi bi-star me-1 text-primary"></i>Rating <span class="text-danger">*</span>
+                            </label>
+                            <div class="star-rating d-flex gap-2">
+                                {% for r in [1, 2, 3, 4, 5] %}
+                                <div class="form-check form-check-inline m-0">
+                                    <input
+                                        class="form-check-input d-none"
+                                        type="radio"
+                                        name="rating"
+                                        id="star{{ r }}"
+                                        value="{{ r }}"
+                                        {% if form.get('rating') == r|string %}checked{% endif %}
+                                        required>
+                                    <label class="form-check-label star-label fs-2" for="star{{ r }}" title="{{ r }} star">
+                                        <i class="bi bi-star-fill" style="cursor:pointer;color:#ccc;"></i>
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text">Click a star to rate from 1 (Poor) to 5 (Excellent).</div>
+                        </div>
+
+                        <!-- Feedback -->
+                        <div class="col-12">
+                            <label for="feedback" class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text me-1 text-primary"></i>Feedback <span class="text-danger">*</span>
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="feedback"
+                                name="feedback"
+                                rows="5"
+                                placeholder="Share your experience with this training — what worked well, what could be improved…"
+                                required>{{ form.get('feedback', '') }}</textarea>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-12 d-flex gap-2 pt-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-send me-2"></i>Submit Review
+                            </button>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_head %}{% endblock %}
+
+<style>
+    .star-label i { transition: color .15s; }
+    .star-label:hover i,
+    .star-label:hover ~ .form-check .star-label i { color: #f9ab00 !important; }
+    input[type="radio"]:checked ~ label .bi,
+    .star-rating:has(input:checked) .form-check:nth-child(-n+{{ form.get('rating', 0)|int }}) .star-label i {
+        color: #f9ab00 !important;
+    }
+</style>
+
+<script>
+    // Interactive star rating highlight
+    const labels = document.querySelectorAll('.star-label');
+    const radios  = document.querySelectorAll('input[name="rating"]');
+
+    function updateStars(selectedValue) {
+        labels.forEach((lbl, idx) => {
+            const star = lbl.querySelector('i');
+            star.style.color = (idx < selectedValue) ? '#f9ab00' : '#ccc';
+        });
+    }
+
+    // Init from pre-selected value (form re-render)
+    const checked = document.querySelector('input[name="rating"]:checked');
+    if (checked) updateStars(parseInt(checked.value));
+
+    radios.forEach((radio, idx) => {
+        radio.addEventListener('change', () => updateStars(idx + 1));
+    });
+
+    labels.forEach((lbl, idx) => {
+        lbl.addEventListener('mouseenter', () => updateStars(idx + 1));
+        lbl.addEventListener('mouseleave', () => {
+            const sel = document.querySelector('input[name="rating"]:checked');
+            updateStars(sel ? parseInt(sel.value) : 0);
+        });
+        lbl.addEventListener('click', () => {
+            radios[idx].checked = true;
+            updateStars(idx + 1);
+        });
+    });
+</script>
+{% endblock %}

@@ -120,7 +120,7 @@
                         <th><i class="bi bi-activity me-1"></i>Status</th>
                         <th><i class="bi bi-puzzle me-1"></i>Relevant Modules</th>
                         <th><i class="bi bi-chat-left-text me-1"></i>Notes</th>
-                        <th class="text-center" style="width:80px;">Action</th>
+                        <th class="text-center" style="width:140px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,8 +149,11 @@
                         <td class="text-muted small">{{ t.relevant_modules or '—' }}</td>
                         <td class="text-muted small">{{ t.notes or '—' }}</td>
                         <td class="text-center">
-                            <form method="POST" action="{{ url_for('delete_training', training_id=t.id) }}"
-                                  onsubmit="return confirm('Delete this record?');">
+                            <a href="{{ url_for('add_review', training_id=t.id) }}" class="btn btn-outline-warning btn-sm me-1" title="Add Review">
+                                <i class="bi bi-star"></i>
+                            </a>
+                            <form class="d-inline" method="POST" action="{{ url_for('delete_training', training_id=t.id) }}"
+                                  onsubmit="return confirm('Delete this record?');">  
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
