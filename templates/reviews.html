@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews & Feedback{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2 class="fw-bold text-primary mb-0">
+            <i class="bi bi-star-half me-2"></i>Reviews &amp; Feedback
+        </h2>
+        <p class="text-muted mt-1 mb-0">All training feedback and ratings from employees.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Trainings
+        </a>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#e8f0fe;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">{{ total_reviews }}</div>
+                <div class="text-muted small">Total Reviews</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#fef3e2;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold" style="color:#f9ab00;">
+                    {% if avg_rating %}{{ "%.1f"|format(avg_rating) }}{% else %}—{% endif %}
+                </div>
+                <div class="text-muted small">Average Rating</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#e6f4ea;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">
+                    {{ reviews | selectattr('rating', 'ge', 4) | list | length }}
+                </div>
+                <div class="text-muted small">High Ratings (4–5 ★)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#fce8e6;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-danger">
+                    {{ reviews | selectattr('rating', 'le', 2) | list | length }}
+                </div>
+                <div class="text-muted small">Low Ratings (1–2 ★)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('reviews') }}" class="row g-3 align-items-end">
+            <div class="col-md-7">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-search me-1"></i>Search
+                </label>
+                <input
+                    type="text"
+                    name="search"
+                    class="form-control"
+                    placeholder="Search by reviewer, training name, employee or feedback…"
+                    value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-star me-1"></i>Rating
+                </label>
+                <select name="rating" class="form-select">
+                    <option value="">All Ratings</option>
+                    {% for r in [5, 4, 3, 2, 1] %}
+                        <option value="{{ r }}" {% if rating_filter == r|string %}selected{% endif %}>
+                            {{ r }} ★
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reviews List -->
+{% if reviews %}
+<div class="row g-3">
+    {% for review in reviews %}
+    <div class="col-12">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                    <!-- Left: reviewer info -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                             style="width:46px;height:46px;background:linear-gradient(135deg,#1a73e8,#0d47a1);font-size:1.1rem;flex-shrink:0;">
+                            {{ review.reviewer_name[0] | upper }}
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ review.reviewer_name }}</div>
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>{{ review.review_date }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: rating stars -->
+                    <div class="text-end">
+                        <div class="mb-1">
+                            {% for i in range(1, 6) %}
+                                {% if i <= review.rating %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                {% else %}
+                                    <i class="bi bi-star text-secondary"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-1 fw-semibold text-muted small">{{ review.rating }}/5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training reference -->
+                <div class="mt-2 mb-2">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill px-3">
+                        <i class="bi bi-journal-text me-1"></i>{{ review.training_title }}
+                    </span>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2 ms-1">
+                        <i class="bi bi-person me-1"></i>{{ review.employee_name }}
+                    </span>
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2 ms-1">
+                        <i class="bi bi-building me-1"></i>{{ review.department }}
+                    </span>
+                </div>
+
+                <!-- Feedback -->
+                <p class="mb-2 text-body" style="line-height:1.6;">
+                    <i class="bi bi-chat-quote text-primary me-2"></i>{{ review.feedback }}
+                </p>
+
+                <!-- Delete -->
+                <div class="d-flex justify-content-end">
+                    <form method="POST" action="{{ url_for('delete_review', review_id=review.id) }}"
+                          onsubmit="return confirm('Delete this review?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-chat-square-text display-3 d-block mb-3"></i>
+        <h5>No reviews found.</h5>
+        <p>
+            {% if search or rating_filter %}
+                Try clearing your filters, or
+            {% endif %}
+            go to a training record and submit a review.
+        </p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary mt-2">
+            <i class="bi bi-arrow-left me-1"></i>View Training Records
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

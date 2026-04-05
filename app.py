@@ -33,6 +33,20 @@ def init_db():
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reviews (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                training_id INTEGER NOT NULL,
+                reviewer_name TEXT NOT NULL,
+                rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+                feedback TEXT NOT NULL,
+                review_date TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (training_id) REFERENCES trainings(id) ON DELETE CASCADE
+            )
+            """
+        )
         conn.commit()
 
 
@@ -134,6 +148,101 @@ def delete_training(training_id):
         conn.commit()
     flash("Training record deleted.", "info")
     return redirect(url_for("index"))
+
+
+# ── Reviews ──────────────────────────────────────────────────────────────────
+
+@app.route("/reviews")
+def reviews():
+    search = request.args.get("search", "").strip()
+    rating_filter = request.args.get("rating", "")
+
+    query = """
+        SELECT r.*, t.training_title, t.employee_name, t.department
+        FROM reviews r
+        JOIN trainings t ON r.training_id = t.id
+        WHERE 1=1
+    """
+    params = []
+
+    if search:
+        like = f"%{search}%"
+        query += " AND (r.reviewer_name LIKE ? OR t.training_title LIKE ? OR t.employee_name LIKE ? OR r.feedback LIKE ?)"
+        params.extend([like, like, like, like])
+
+    if rating_filter:
+        query += " AND r.rating = ?"
+        params.append(int(rating_filter))
+
+    query += " ORDER BY r.created_at DESC"
+
+    with get_db() as conn:
+        all_reviews = conn.execute(query, params).fetchall()
+        avg_row = conn.execute("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews").fetchone()
+
+    return render_template(
+        "reviews.html",
+        reviews=all_reviews,
+        search=search,
+        rating_filter=rating_filter,
+        avg_rating=avg_row["avg_rating"],
+        total_reviews=avg_row["total"],
+    )
+
+
+@app.route("/reviews/add/<int:training_id>", methods=["GET", "POST"])
+def add_review(training_id):
+    with get_db() as conn:
+        training = conn.execute("SELECT * FROM trainings WHERE id = ?", (training_id,)).fetchone()
+
+    if training is None:
+        flash("Training record not found.", "danger")
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        reviewer_name = request.form.get("reviewer_name", "").strip()
+        rating = request.form.get("rating", "").strip()
+        feedback = request.form.get("feedback", "").strip()
+        review_date = request.form.get("review_date", "").strip()
+
+        errors = []
+        if not reviewer_name:
+            errors.append("Reviewer name is required.")
+        if not rating or not rating.isdigit() or not (1 <= int(rating) <= 5):
+            errors.append("A rating between 1 and 5 is required.")
+        if not feedback:
+            errors.append("Feedback text is required.")
+        if not review_date:
+            errors.append("Review date is required.")
+
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return render_template("add_review.html", training=training, form=request.form)
+
+        with get_db() as conn:
+            conn.execute(
+                """
+                INSERT INTO reviews (training_id, reviewer_name, rating, feedback, review_date)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (training_id, reviewer_name, int(rating), feedback, review_date),
+            )
+            conn.commit()
+
+        flash("Review submitted successfully!", "success")
+        return redirect(url_for("reviews"))
+
+    return render_template("add_review.html", training=training, form={})
+
+
+@app.route("/reviews/delete/<int:review_id>", methods=["POST"])
+def delete_review(review_id):
+    with get_db() as conn:
+        conn.execute("DELETE FROM reviews WHERE id = ?", (review_id,))
+        conn.commit()
+    flash("Review deleted.", "info")
+    return redirect(url_for("reviews"))
 
 
 if __name__ == "__main__":
