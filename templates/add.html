@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Add Training Requirement{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>Add Training Requirement
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('add_training') }}">
+                    <div class="row g-3">
+
+                        <!-- Employee Name -->
+                        <div class="col-md-6">
+                            <label for="employee_name" class="form-label fw-semibold">
+                                <i class="bi bi-person me-1 text-primary"></i>Employee Name <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="employee_name"
+                                name="employee_name"
+                                placeholder="e.g. John Smith"
+                                value="{{ form.get('employee_name', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Department -->
+                        <div class="col-md-6">
+                            <label for="department" class="form-label fw-semibold">
+                                <i class="bi bi-building me-1 text-primary"></i>Department <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="department"
+                                name="department"
+                                placeholder="e.g. Engineering, HR, Finance"
+                                value="{{ form.get('department', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Training Title -->
+                        <div class="col-12">
+                            <label for="training_title" class="form-label fw-semibold">
+                                <i class="bi bi-journal-text me-1 text-primary"></i>Training Title <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="training_title"
+                                name="training_title"
+                                placeholder="e.g. Safety Compliance 2024, Python Advanced"
+                                value="{{ form.get('training_title', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Training Type -->
+                        <div class="col-md-6">
+                            <label for="training_type" class="form-label fw-semibold">
+                                <i class="bi bi-tag me-1 text-primary"></i>Training Type <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="training_type" name="training_type" required>
+                                <option value="" disabled {% if not form.get('training_type') %}selected{% endif %}>Select type…</option>
+                                {% for t in ['Mandatory', 'Optional', 'Compliance', 'Technical', 'Soft Skills', 'Leadership', 'Other'] %}
+                                    <option value="{{ t }}" {% if form.get('training_type') == t %}selected{% endif %}>{{ t }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Due Date -->
+                        <div class="col-md-6">
+                            <label for="due_date" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event me-1 text-primary"></i>Due Date <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                class="form-control"
+                                id="due_date"
+                                name="due_date"
+                                value="{{ form.get('due_date', '') }}"
+                                required>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-6">
+                            <label for="status" class="form-label fw-semibold">
+                                <i class="bi bi-activity me-1 text-primary"></i>Status
+                            </label>
+                            <select class="form-select" id="status" name="status">
+                                {% for s in ['Pending', 'In Progress', 'Completed', 'Overdue'] %}
+                                    <option value="{{ s }}" {% if form.get('status', 'Pending') == s %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Relevant Modules -->
+                        <div class="col-md-6">
+                            <label for="relevant_modules" class="form-label fw-semibold">
+                                <i class="bi bi-puzzle me-1 text-primary"></i>Relevant Modules
+                                <span class="text-muted fw-normal small">(optional — for future use)</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="relevant_modules"
+                                name="relevant_modules"
+                                placeholder="e.g. Module 1, Module 3A"
+                                value="{{ form.get('relevant_modules', '') }}">
+                            <div class="form-text">List the training modules applicable to this requirement.</div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label for="notes" class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text me-1 text-primary"></i>Notes
+                                <span class="text-muted fw-normal small">(optional)</span>
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="notes"
+                                name="notes"
+                                rows="3"
+                                placeholder="Any additional information or context…">{{ form.get('notes', '') }}</textarea>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-12 d-flex gap-2 pt-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save me-2"></i>Save Training Record
+                            </button>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help card -->
+        <div class="card mt-3 border-0" style="background:#e8f0fe;">
+            <div class="card-body py-3">
+                <h6 class="text-primary mb-2"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+                <ul class="mb-0 small text-muted ps-3">
+                    <li>Fields marked with <span class="text-danger">*</span> are required.</li>
+                    <li>Use <strong>Relevant Modules</strong> to note which training modules apply — this will power future automation features.</li>
+                    <li>All records are immediately visible to everyone in the main table view.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
