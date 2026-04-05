@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Training Requirements — All Records{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2 class="fw-bold text-primary mb-0">
+            <i class="bi bi-table me-2"></i>Training Requirements
+        </h2>
+        <p class="text-muted mt-1 mb-0">All employee training requirements are listed below.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('add_training') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Add New Training
+        </a>
+    </div>
+</div>
+
+<!-- Filter / Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-search me-1"></i>Search
+                </label>
+                <input
+                    type="text"
+                    name="search"
+                    class="form-control"
+                    placeholder="Search by name, training or department…"
+                    value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-funnel me-1"></i>Status
+                </label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for s in ['Pending', 'In Progress', 'Completed', 'Overdue'] %}
+                        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-building me-1"></i>Department
+                </label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept }}" {% if department_filter == dept %}selected{% endif %}>{{ dept }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#e8f0fe;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-primary">{{ trainings | length }}</div>
+                <div class="text-muted small">Total Records</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#fef3e2;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold" style="color:#f9ab00;">{{ trainings | selectattr('status', 'equalto', 'Pending') | list | length }}</div>
+                <div class="text-muted small">Pending</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#e6f4ea;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-success">{{ trainings | selectattr('status', 'equalto', 'Completed') | list | length }}</div>
+                <div class="text-muted small">Completed</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100 border-0" style="background:#fce8e6;">
+            <div class="card-body py-3">
+                <div class="fs-1 fw-bold text-danger">{{ trainings | selectattr('status', 'equalto', 'Overdue') | list | length }}</div>
+                <div class="text-muted small">Overdue</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Training Table -->
+<div class="card">
+    <div class="card-header bg-primary text-white py-3">
+        <i class="bi bi-list-ul me-2"></i>Training Records
+        <span class="badge bg-white text-primary ms-2">{{ trainings | length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if trainings %}
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:50px;">#</th>
+                        <th><i class="bi bi-person me-1"></i>Employee</th>
+                        <th><i class="bi bi-building me-1"></i>Department</th>
+                        <th><i class="bi bi-journal-text me-1"></i>Training Title</th>
+                        <th><i class="bi bi-tag me-1"></i>Type</th>
+                        <th><i class="bi bi-calendar me-1"></i>Due Date</th>
+                        <th><i class="bi bi-activity me-1"></i>Status</th>
+                        <th><i class="bi bi-puzzle me-1"></i>Relevant Modules</th>
+                        <th><i class="bi bi-chat-left-text me-1"></i>Notes</th>
+                        <th class="text-center" style="width:80px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in trainings %}
+                    <tr>
+                        <td class="text-center text-muted small">{{ loop.index }}</td>
+                        <td class="fw-semibold">{{ t.employee_name }}</td>
+                        <td>{{ t.department }}</td>
+                        <td>{{ t.training_title }}</td>
+                        <td>
+                            <span class="badge rounded-pill bg-secondary">{{ t.training_type }}</span>
+                        </td>
+                        <td>{{ t.due_date }}</td>
+                        <td>
+                            {% set s = t.status %}
+                            {% if s == 'Pending' %}
+                                <span class="badge badge-pending rounded-pill px-3">{{ s }}</span>
+                            {% elif s == 'Completed' %}
+                                <span class="badge badge-completed rounded-pill px-3">{{ s }}</span>
+                            {% elif s == 'In Progress' %}
+                                <span class="badge badge-inprogress rounded-pill px-3">{{ s }}</span>
+                            {% else %}
+                                <span class="badge badge-overdue rounded-pill px-3">{{ s }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ t.relevant_modules or '—' }}</td>
+                        <td class="text-muted small">{{ t.notes or '—' }}</td>
+                        <td class="text-center">
+                            <form method="POST" action="{{ url_for('delete_training', training_id=t.id) }}"
+                                  onsubmit="return confirm('Delete this record?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox display-3 d-block mb-3"></i>
+            <h5>No training records found.</h5>
+            <p>{% if search or status_filter or department_filter %}Try clearing your filters, or {% endif %}
+               <a href="{{ url_for('add_training') }}">add a new training requirement</a>.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
